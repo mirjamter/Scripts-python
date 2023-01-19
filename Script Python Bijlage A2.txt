@@ -1,0 +1,207 @@
+# Query: 
+# ContextLines: 1
+
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Oct 14 15:24:28 2022
+
+@author: ProvincieGelderland
+"""
+
+# clear memory
+from IPython import get_ipython
+get_ipython().magic('reset -sf')
+
+# import relevant packages
+import os # for walking through folders
+import fnmatch # for matching filenames
+import numpy as np # for loading data files
+import csv
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# %%
+# open de data met pupil oppervlak en maak toegankelijk met Python
+file = open('eye_data_ESS01Con.csv')
+csvreader = csv.reader(file)
+header = []                # variabele voor de header van de data
+header = next(csvreader)   # ['tijd', 'pup']
+rows = []                  # variabele voor de inhoud van de data
+for row in csvreader:     # loop om alle data toegankelijk te maken
+    rows.append(row)
+
+# open de data met events en maak toegankelijk met Python
+file2 = open('event_dataESS01Con.csv')
+csvreader2 = csv.reader(file2)
+header2 = []                  # variabele voor de header van de data
+header2 = next(csvreader2)    # ['tijd', 'event']
+rowsevents = []               # variabele voor de inhoud van de data
+for row in csvreader2:        # loop om alle data toegankelijk te maken
+    rowsevents.append(row)
+
+tijden = []     # variabele voor alle tijden
+pupillen = []   # variabele voor alle pupilloppervlakken
+
+for row in rows:
+    tijd = float(row[0])
+    pupil = float(row[1])
+    tijden.append(tijd)
+    pupillen.append(pupil)
+  
+#%%    
+trialstarttijd   = []  
+trialstart       = []
+conditieneutraal = []
+neutraal         = []
+stimulusonset    = []
+onsetstimulus    = []
+Trialend         = []
+Endtrial         = []
+conditioncsmin   = []
+csmin            = []
+conditioncsplus  = []
+csplus           = []
+conditioncspluss = []
+cspluss          = []
+
+trialstartIndex = []
+
+for x, row in enumerate(rowsevents):
+    # print(x)
+    if row [1] == 'TRIALSTART':                 ##trialstart
+        trialstarttijd = float(row[0])
+        trialstart.append(trialstarttijd)
+        trialstartIndex.append(x)
+    if row [1] == 'condition neutral':        ##conditie neutraal
+        conditieneutraal = int(float(row[0]))
+        neutraal.append(conditieneutraal)
+        # neutraalIndex.append(x)
+    if row [1] == 'stim onset':               ##stimulus onset
+        stimulusonset = float(row[0])
+        onsetstimulus.append(stimulusonset)
+        # onsetstimulusIndex.append(x)
+    if row [1] == 'TRIALEND':                 ##stimulus einde
+        Trialend = float(row[0])
+        Endtrial.append(Trialend)
+        # endtrialIndex.append(x)
+    if row [1] == 'condition csMin':          ##conditie CS min
+        conditioncsmin = float(row[0])
+        csmin.append(conditioncsmin)
+        # csminIndex.append(x)
+    if row [1] == 'condition csPlus':         ##conditie CS plus zonder schok
+        conditioncsplus = float(row[0])
+        csplus.append(conditioncsplus)
+        # conditioncsplusIndex.append(x)
+    if row [1] == 'condition csPlusS':        ##conditie CS plus met schok
+        conditioncspluss = float(row[0])
+        cspluss.append(conditioncspluss)
+        # csplussIndex.append(x)
+    if row [1] == 'prac end':             ## 
+        pracEndTr = float(row[0])
+    if row [1] == 'trialnr: 1/33':        ## 
+        eersteExpTr = float(row[0])
+
+#%%
+# from sklearn import preprocessing
+# genormaliseerde_waarden = preprocessing.normalize([pupillen])
+# norm_pup = genormaliseerde_waarden.reshape(genormaliseerde_waarden.size,1)
+
+x_min = min(pupillen)
+x_max = max(pupillen)
+boven_temp = np.array(pupillen)-x_min
+onder_temp = x_max-x_min
+pup_norm = boven_temp/onder_temp
+
+plt.plot(tijden,pup_norm)
+irow = []
+for irow in trialstart:
+    plt.axvline(x=irow, ymin=0, ymax = 2500, linewidth=2, color='k')
+irow = []
+for irow in Endtrial:
+    plt.axvline(x=irow, ymin=0, ymax = 2500, linewidth=2, color='r')
+irow = []
+for irow in neutraal:
+    plt.axvline(x=irow, ymin=0, ymax = 2500, linewidth=2, color='b')
+irow = []
+for irow in onsetstimulus:
+    plt.axvline(x=irow, ymin=0, ymax = 2500, linewidth=2, color='g')
+irow = []
+for irow in csmin:
+    plt.axvline(x=irow, ymin=0, ymax = 2500, linewidth=2, color='m')
+irow = []
+for irow in csplus:
+    plt.axvline(x=irow, ymin=0, ymax = 2500, linewidth=2, color='c')
+irow = []
+for irow in cspluss:
+    plt.axvline(x=irow, ymin=0, ymax = 2500, linewidth=2, color='y')
+
+plt.xlim([33375, 123671])   # de maximale waarde op de x-as is de laatste tijd uit de lijst tijden
+# plt.xlim([0,1000])   # de maximale waarde op de x-as is de laatste tijd uit de lijst tijden
+
+plt.title('Pupiloppervlakte per tijdseenheid participant 1')
+plt.xlabel('tijd (ms)')                 
+plt.ylabel('pupiloppervlakte (aantal pixels)')    
+plt.show()
+
+#%%
+#gemiddelde berekenen van eerste trial van elke conditie
+#eerste neutralen trial na prac end
+#vanaf stimulus onset
+
+#neutraal
+lengte = len(pup_norm[28368:28769]) 
+som = sum(pup_norm[28368:28769])
+gemiddelde = som / lengte 
+print(gemiddelde) # begin neutraal
+
+lengte = len(pup_norm[108106:108507]) 
+som = sum(pup_norm[108106:108507])
+gemiddelde = som / lengte 
+print(gemiddelde) # eind neutraal
+
+
+#CS-
+lengte = len(pup_norm[31191:31592]) 
+som = sum(pup_norm[31191:31592])
+gemiddelde = som / lengte 
+print(gemiddelde) # begin cs-
+
+lengte = len(pup_norm[110905:111306]) 
+som = sum(pup_norm[110905:111306])
+gemiddelde = som / lengte 
+print(gemiddelde) # eind cs-
+
+#cs+ zonder schok
+lengte = len(pup_norm[47286:47687]) 
+som = sum(pup_norm[47286:47687])
+gemiddelde = som / lengte 
+print(gemiddelde) # begin cs+
+
+lengte = len(pup_norm[113449:113850]) 
+som = sum(pup_norm[113449:113850])
+gemiddelde = som / lengte 
+print(gemiddelde) # eind cs+
+
+
+#CS+ met schok
+lengte = len(pup_norm[31191:39426]) 
+som = sum(pup_norm[31191:39426])
+gemiddelde = som / lengte 
+print(gemiddelde) # begin cs+s
+
+lengte = len(pup_norm[105409:105810]) 
+som = sum(pup_norm[105409:105810])
+gemiddelde = som / lengte 
+print(gemiddelde) # eind cs+s
+
+#%%
+datazonderoefen = pup_norm[28368:28769] 
+
+x = [datazonderoefen]
+plt.hist(x, bins = 100)
+plt.ylim([0,14000])
+plt.xlim([0.2,1])
+plt.xlabel('Genormaliseerde pupiloppervlakte')
+plt.ylabel('Aantal metingen')
+plt.title('Participant 1')
+plt.show()
