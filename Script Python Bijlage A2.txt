@@ -205,3 +205,4 @@ plt.xlabel('Genormaliseerde pupiloppervlakte')
 plt.ylabel('Aantal metingen')
 plt.title('Participant 1')
 plt.show()
+
